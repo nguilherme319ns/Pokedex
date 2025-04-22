@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;500;600;700;800&display=swap');
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+* {
+    font-family: "Oxanium", cursive;
+}
+
+.pokemon-data, .pokemon-input-search, .poke-button {
+    font-weight: 600;
+}
+
+body {
+    text-align: center;
+    background: linear-gradient(to bottom, #76bbf3, #fff);
+    min-height: 100vh;
+}
+
+main {
+    display: inline-block;
+    margin-top: 2%;
+    padding: 15px;
+    position: relative;
+}
+
+.pokedex {
+    width: 100%;
+    max-width: 425px;
+}
+
+.pokemon-gif {
+    position: absolute;
+    bottom: 55%;
+    left: 50%;
+
+    transform: translate(-63%, 20%);
+
+    height: 18%;
+}
+
+.pokemon-data {
+    position: absolute;
+    top: 54.5%;
+    right: 27%;
+
+    color: #aaa;
+
+    /* Mobile responsivity font-size */
+    font-size: clamp(8px, 5vw, 27px);
+}
+
+.pokemon-name,
+.pokemon-input-search {
+    color: #5f4a4a;
+}
+
+.pokemon-name {
+    text-transform: capitalize;
+}
+
+.pokemon-form {
+    position: absolute;
+    top: 65%;
+    left: 13.5%;
+
+    width: 65%;
+}
+
+.pokemon-input-search, .poke-button {
+    padding: 4%;
+    border: 2px solid;
+    border-radius: 5px;
+
+    
+    font-size: clamp(8px, 5vw, 1rem);
+}
+
+.pokemon-input-search {
+    width: 100%;
+    outline: none;
+    border-color: #333;
+
+   
+    box-shadow:
+        -3px 4px 0 #888,
+        -5px 7px 0 #333;
+}
+
+.pokemon-buttons {
+    position: absolute;
+    bottom: 10%;
+    left: 50%;
+
+    width: 65%;
+    transform: translate(-57%, 0);
+
+    display: flex;
+    gap: 20px;
+}
+
+.poke-button {
+    width: 50%;
+    border-color: #000;
+
+    color: white;
+    background-color: #444;
+
+ 
+    box-shadow:
+        -2px 3px 0 #222,
+        -4px 6px 0 #000;
+}
+
+.poke-button:active {
+    box-shadow: inset -4px 4px 0 #222;
+    font-size: 0.9rem;
+}
