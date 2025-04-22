@@ -148,7 +148,7 @@ const renderizarPokemon = async (pokemon) => {
 }
 
 // Inicializa o Pokemon
-renderizarPokemon("Charizard");
+renderizarPokemon("Zapdos");
 
 // Submete o formulário de busca
 const enviarFormulario = (event) => {
