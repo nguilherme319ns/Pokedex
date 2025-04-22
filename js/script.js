@@ -1,210 +1,193 @@
+const MAX_POKEMONS_PADRAO = 1010;
+const PRIMEIRO_POKEMON_ID_PADRAO = 1;
 
+const endpointPokeAPI = "https://pokeapi.co/api/v2/pokemon/";
+const endpointPokedexNacional = "https://pokeapi.co/api/v2/pokedex/1/";
 
-const DEFAULT_MAX_POKEMONS = 1010;
-const DEFAULT_FIRST_POKEMON_ID = 1;
+const carregandoGif = "./images/spinning-loading.gif";
+const pokemonDesconhecidoGif = "./images/missingno.gif";
 
-const pokeAPIEndoint = "https://pokeapi.co/api/v2/pokemon/";
-const nationalPokedexAPIEndoint = "https://pokeapi.co/api/v2/pokedex/1/";
+const nomePokemonDOM = document.querySelector(".pokemon-name");
+const idPokemonDOM = document.querySelector(".pokemon-id");
+const imagemPokemonGifDOM = document.querySelector(".pokemon-gif");
 
-const pokeLoading = "./images/spinning-loading.gif";
-const pokeMissingNo = "./images/missingno.gif";
+const formularioPokemonDOM = document.querySelector(".pokemon-form");
+const inputPesquisaPokemonDOM = document.querySelector(".pokemon-input-search");
 
-const pokemonNameDOM = document.querySelector(".pokemon-name");
-const pokemonIdDOM = document.querySelector(".pokemon-id");
-const pokemonImageGifDOM = document.querySelector(".pokemon-gif");
+const botaoAnterior = document.querySelector(".button-prev");
+const botaoProximo = document.querySelector(".button-next");
 
-const pokemonFormDOM = document.querySelector(".pokemon-form");
-const pokemonInputDOM = document.querySelector(".pokemon-input-search");
+let idPokemonBusca = PRIMEIRO_POKEMON_ID_PADRAO;
+let idMaximoPokemonBusca = PRIMEIRO_POKEMON_ID_PADRAO;
 
-const pokeButtonPrev = document.querySelector(".button-prev");
-const pokeButtonNext = document.querySelector(".button-next");
+// Define a quantidade máxima de pokémons buscáveis
+const definirIdMaximoPokemon = async () => {
+    const respostaAPI = await fetch(endpointPokedexNacional);
 
-let searchPokemonId = DEFAULT_FIRST_POKEMON_ID;
-let maxSearchPokemonId = DEFAULT_FIRST_POKEMON_ID;
-
-const setMaxSearchPokemonId = async () => {
-
-    const pokedexAPIResponse = await fetch(nationalPokedexAPIEndoint);
-
-    console.log("nationalPokedexAPIEndoint", nationalPokedexAPIEndoint);
-    console.log("pokedexAPIResponse", pokedexAPIResponse);
-
-    if (pokedexAPIResponse.status == 200) {
-        const pokedexData = await pokedexAPIResponse.json();
-        let maxPokemonCount = pokedexData.pokemon_entries.length;
-        console.log("pokedexData", pokedexData);
-        console.log("maxPokemonCount", maxPokemonCount);
-
-        maxSearchPokemonId = maxPokemonCount;
+    if (respostaAPI.status === 200) {
+        const dadosPokedex = await respostaAPI.json();
+        idMaximoPokemonBusca = dadosPokedex.pokemon_entries.length;
     } else {
-        maxSearchPokemonId = DEFAULT_MAX_POKEMONS;
-    };
+        idMaximoPokemonBusca = MAX_POKEMONS_PADRAO;
+    }
 }
 
-setMaxSearchPokemonId();
+definirIdMaximoPokemon();
 
-function pokeNameRender(pokeDataFetched) {
-    let pokeName = pokeDataFetched.name;
-    pokemonNameDOM.innerHTML = pokeName;
-
-    console.log("pokeName", pokeName);
+// Renderiza o nome do Pokémon
+function exibirNomePokemon(dadosPokemon) {
+    nomePokemonDOM.innerHTML = dadosPokemon.name;
 }
 
-function formatPokeId(pokeId) {
-    let pokeLocale = "pt-BR";
-    let pokeMinimumDigits = 4;
-    let pokeFormatOptions = {
-        minimumIntegerDigits: pokeMinimumDigits,
+// Formata o ID do Pokémon para 4 dígitos (ex: 0001)
+function formatarIdPokemon(id) {
+    return id.toLocaleString("pt-BR", {
+        minimumIntegerDigits: 4,
         useGrouping: false,
+    });
+}
+
+// Renderiza o ID do Pokémon
+function exibirIdPokemon(dadosPokemon) {
+    idPokemonDOM.innerHTML = formatarIdPokemon(dadosPokemon.id);
+}
+
+// Renderiza a imagem animada do Pokémon
+function exibirGifPokemon(dadosPokemon) {
+    let gif = dadosPokemon?.sprites?.versions?.["generation-v"]?.["black-white"]?.animated?.front_default;
+
+    if (!gif) {
+        gif = dadosPokemon.sprites.front_default;
+    }
+
+    imagemPokemonGifDOM.src = gif;
+}
+
+// Reseta o campo de pesquisa
+function limparPesquisa() {
+    nomePokemonDOM.innerHTML = "Carregando...";
+    inputPesquisaPokemonDOM.value = "";
+}
+
+// Esconde o separador visual entre nome e ID
+function esconderSeparador() {
+    document.querySelector(".poke-separator").innerHTML = "";
+}
+
+// Mostra o separador visual
+function mostrarSeparador() {
+    document.querySelector(".poke-separator").innerHTML = "-";
+}
+
+// Exibe animação de carregando
+function mostrarCarregamento() {
+    esconderSeparador();
+    imagemPokemonGifDOM.src = carregandoGif;
+    nomePokemonDOM.innerHTML = "Carregando...";
+    idPokemonDOM.innerHTML = "";
+}
+
+// Retorna um Pokémon genérico quando não encontra
+function obterPokemonDesconhecido() {
+    const spritesFalsos = {
+        versions: {
+            "generation-v": {
+                "black-white": {
+                    animated: {
+                        front_default: pokemonDesconhecidoGif
+                    }
+                }
+            }
+        }
     };
-    let pokeFormattedPokeId = pokeId.toLocaleString(pokeLocale, pokeFormatOptions);
 
-    return pokeFormattedPokeId;
+    return {
+        id: "???",
+        name: "Não encontrado :(",
+        sprites: spritesFalsos,
+    };
 }
 
-function pokeIdRender(pokeDataFetched) {
-    let pokeId = pokeDataFetched.id;
-    let pokeFormattedId = formatPokeId(pokeId);
-
-    
-    pokemonIdDOM.innerHTML = pokeFormattedId;
-
-    console.log("pokeId", pokeId);
-    console.log("pokeFormattedId", pokeFormattedId);
+// Salva o ID se a busca foi bem sucedida
+function aoBuscarPokemonComSucesso(pokemon) {
+    idPokemonBusca = pokemon.id;
 }
 
-function pokeImgGifRender(pokeDataFetched) {
-    let pokeGif = pokeDataFetched["sprites"]["versions"]["generation-v"]["black-white"]["animated"]["front_default"];
-   
-    if (pokeGif == null) {
-        pokeGif = pokeDataFetched.sprites.front_default;
-    }
-    pokemonImageGifDOM.src = pokeGif;
-
-    console.log("pokeGif", pokeGif);
+// Reseta o ID se a busca falhar
+function aoBuscarPokemonSemSucesso() {
+    idPokemonBusca = 0;
+    esconderSeparador();
 }
 
-function resetPokeInput() {
-    pokemonNameDOM.innerHTML = "Loading...";
-    pokemonInputDOM.value = "";
-}
+// Busca o Pokémon pela API
+const buscarPokemon = async (pokemon) => {
+    const url = endpointPokeAPI + pokemon.toString().toLowerCase();
+    const resposta = await fetch(url);
 
-function hidePokeSeparator() {
-    let pokeSeparatorDOM = document.querySelector(".poke-separator");
-    pokeSeparatorDOM.innerHTML = "";
-}
-
-function showPokeSeparator() {
-    let pokeSeparatorDOM = document.querySelector(".poke-separator");
-    pokeSeparatorDOM.innerHTML = "-";
-}
-
-function loadingPokeDataFetch() {
-    hidePokeSeparator();
-    pokemonImageGifDOM.src = pokeLoading;
-    pokemonNameDOM.innerHTML = "Loading...";
-    pokemonIdDOM.innerHTML = "";
-}
-
-function getMissingNo() {
-   
-    let fakePokeSprites = { "versions": { "generation-v": { "black-white": { "animated": { "front_default": pokeMissingNo } } } } };
-    let fakePokeData = {
-        "id": "???",
-        "name": "Not found :(",
-        "sprites": fakePokeSprites,
-    }
-    return fakePokeData;
-}
-
-function handleSucceededPokeFetch(pokeData) {
-    searchPokemonId = pokeData.id;
-}
-
-function handleUnsucceededPokeFetch() {
-    searchPokemonId = 0;
-    hidePokeSeparator();
-}
-
-const fetchPokemon = async (pokemon) => {
-
-    let pokeString = pokemon.toString();
-    let pokemonURL = pokeAPIEndoint + pokeString.toLowerCase();
-    const pokeAPIResponse = await fetch(pokemonURL);
-
-    console.log("pokemonURL", pokemonURL);
-    console.log("pokeAPIResponse", pokeAPIResponse);
-
-    if (pokeAPIResponse.status == 200) {
-        const pokeData = await pokeAPIResponse.json();
-        console.log("pokeData", pokeData);
-        handleSucceededPokeFetch(pokeData);
-
-        return pokeData;
-
+    if (resposta.status === 200) {
+        const dados = await resposta.json();
+        aoBuscarPokemonComSucesso(dados);
+        return dados;
     } else {
-        let fakePokeData = getMissingNo();
-        console.log("fakePokeData", fakePokeData);
-        handleUnsucceededPokeFetch();
-
-        return fakePokeData;
-    };
+        const dadosFalsos = obterPokemonDesconhecido();
+        aoBuscarPokemonSemSucesso();
+        return dadosFalsos;
+    }
 }
 
+// Renderiza o Pokémon na tela
+const renderizarPokemon = async (pokemon) => {
+    mostrarCarregamento();
 
+    const dadosPokemon = await buscarPokemon(pokemon);
 
-const renderPokemon = async (pokemon) => {
-    loadingPokeDataFetch();
-
-    let pokeDataFetched = await fetchPokemon(pokemon);
-
-    pokeNameRender(pokeDataFetched);
-    pokeIdRender(pokeDataFetched);
-    pokeImgGifRender(pokeDataFetched);
-    showPokeSeparator();
+    exibirNomePokemon(dadosPokemon);
+    exibirIdPokemon(dadosPokemon);
+    exibirGifPokemon(dadosPokemon);
+    mostrarSeparador();
 }
 
+// Inicializa o Pokemon
+renderizarPokemon("Charizard");
 
-renderPokemon("Bulbasaur");
-
-const pokeForm = (event) => {
+// Submete o formulário de busca
+const enviarFormulario = (event) => {
     event.preventDefault();
-    let pokeInputValue = pokemonInputDOM.value;
+    const valorBusca = inputPesquisaPokemonDOM.value;
 
-    renderPokemon(pokeInputValue);
-    resetPokeInput();
-
-    console.log("Poké Form!!!");
-    // console.log("pokeInputValue", pokemonInputDOM.value);
-    console.log("pokeInputValue", pokeInputValue);
+    renderizarPokemon(valorBusca);
+    limparPesquisa();
 }
 
-function clampSearchPokemonId() {
-    if (searchPokemonId <= 0) {
-        searchPokemonId = maxSearchPokemonId;
+// Impede que ID fique fora do intervalo
+function limitarIdBusca() {
+    if (idPokemonBusca <= 0) {
+        idPokemonBusca = idMaximoPokemonBusca;
     }
-
-    if (searchPokemonId > maxSearchPokemonId) {
-        searchPokemonId = DEFAULT_FIRST_POKEMON_ID;
+    if (idPokemonBusca > idMaximoPokemonBusca) {
+        idPokemonBusca = PRIMEIRO_POKEMON_ID_PADRAO;
     }
 }
 
-function pokeButton() {
-    clampSearchPokemonId();
-    renderPokemon(searchPokemonId);
+// Renderiza o Pokémon atual
+function carregarPokemonAtual() {
+    limitarIdBusca();
+    renderizarPokemon(idPokemonBusca);
 }
 
-const pokePrev = () => {
-    searchPokemonId -= 1;
-    pokeButton();
+// Botão anterior
+const buscarAnterior = () => {
+    idPokemonBusca -= 1;
+    carregarPokemonAtual();
 }
 
-const pokeNext = () => {
-    searchPokemonId += 1;
-    pokeButton();
+// Botão próximo
+const buscarProximo = () => {
+    idPokemonBusca += 1;
+    carregarPokemonAtual();
 }
 
-pokemonFormDOM.addEventListener("submit", pokeForm);
 
-pokeButtonPrev.addEventListener("click", pokePrev);
-pokeButtonNext.addEventListener("click", pokeNext);
+formularioPokemonDOM.addEventListener("submit", enviarFormulario);
+botaoAnterior.addEventListener("click", buscarAnterior);
+botaoProximo.addEventListener("click", buscarProximo);
